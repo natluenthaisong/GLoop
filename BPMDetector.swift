@@ -14,21 +14,8 @@ enum BPMError: LocalizedError {
 enum BPMDetector {
     static let sampleRate = 11025.0
     static func detect(path: String) throws -> BPMEstimate {
-        let decoder = ["/opt/homebrew/bin/ffmpeg","/usr/local/bin/ffmpeg"].first { FileManager.default.isExecutableFile(atPath: $0) }
-        guard let decoder else { throw BPMError.message("BPM detection needs FFmpeg installed on this Mac.") }
-        let process = Process(); process.executableURL = URL(fileURLWithPath: decoder)
-        // Decode an unmodified-speed excerpt. No shell interpolation or media upload.
-        process.arguments = ["-nostdin","-v","error","-i",path,"-t","90","-vn","-sn","-dn","-ac","1","-ar","11025","-f","f32le","pipe:1"]
-        let output = Pipe(); process.standardOutput = output; process.standardError = FileHandle.nullDevice
-        try process.run()
-        let deadline = DispatchWorkItem { if process.isRunning { process.terminate() } }
-        DispatchQueue.global().asyncAfter(deadline: .now()+45, execute: deadline)
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit(); deadline.cancel()
-        guard process.terminationStatus == 0 else { throw BPMError.message("Could not analyze this file's audio. You can enter BPM manually.") }
-        let samples: [Float] = data.withUnsafeBytes { bytes in
-            (0..<(bytes.count / 4)).map { Float(bitPattern: UInt32(littleEndian: bytes.loadUnaligned(fromByteOffset: $0*4, as: UInt32.self))) }
-        }
+        let pcm = try NativeAudio.decode(path, sampleRate: sampleRate, channels: 1, limit: 90, truncate: true)
+        let samples = Array(UnsafeBufferPointer(start: pcm.floatChannelData![0], count: Int(pcm.frameLength)))
         return try estimate(samples)
     }
     static func estimate(_ samples: [Float]) throws -> BPMEstimate {

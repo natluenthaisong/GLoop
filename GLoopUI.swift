@@ -50,6 +50,14 @@ extension PlayerApp {
         autoIncrease.toolTip = "Raise speed on every loop, up to 100%."
         speedStep.addItems(withTitles: ["+1% / loop","+5% / loop"]); speedStep.target = self; speedStep.action = #selector(speedStepChanged); speedStep.setAccessibilityLabel("Auto speed increment")
         let tempoCard = section("Speed",nil,[headline,speedSlider,fillRow([button("50%",#selector(halfSpeed)),button("75%",#selector(threeQuarter)),button("100%",#selector(normalSpeed))]),row([autoIncrease,flexible(),speedStep])])
+        for (control,action,name) in [(pitchDown,#selector(lowerPitch),"Lower pitch one semitone"),(pitchUp,#selector(raisePitch),"Raise pitch one semitone"),(pitchReset,#selector(resetPitch),"Reset to original pitch")] {
+            control.target = self; control.action = action; control.bezelStyle = .rounded; control.setAccessibilityLabel(name)
+        }
+        width(pitchDown,30); width(pitchUp,30)
+        pitchLabel.font = .monospacedDigitSystemFont(ofSize: 14,weight: .medium); pitchLabel.alignment = .center
+        pitchLabel.setContentHuggingPriority(.init(1),for: .horizontal); pitchLabel.setAccessibilityLabel("Pitch shift"); pitchLabel.toolTip = "Changes audio pitch only. Video and tablature stay unchanged; playback speed is independent."
+        pitchNote.font = .systemFont(ofSize: 12); pitchNote.textColor = GLoopTheme.muted; pitchNote.maximumNumberOfLines = 2; pitchNote.lineBreakMode = .byWordWrapping
+        let pitchSection = section("Pitch",nil,[row([pitchDown,pitchLabel,pitchUp,pitchReset],spacing: 8),pitchNote])
         for (field,name) in [(aField,"Loop start A"),(bField,"Loop end B")] { field.font = .monospacedDigitSystemFont(ofSize: 13,weight: .regular); field.alignment = .center; field.target = self; field.action = #selector(markersEdited); field.delegate = self; field.setAccessibilityLabel(name) }
         let start = col([row([label("A",12,.semibold),flexible(),button("Set here",#selector(setA))]),aField],spacing: 8)
         let end = col([row([label("B",12,.semibold),flexible(),button("Set here",#selector(setB))]),bField],spacing: 8)
@@ -74,7 +82,7 @@ extension PlayerApp {
         alignmentControls.isHidden = true
         alignmentToggle.title = ""; alignmentToggle.setButtonType(.pushOnPushOff); alignmentToggle.bezelStyle = .disclosure; alignmentToggle.target = self; alignmentToggle.action = #selector(toggleAlignment); alignmentToggle.setAccessibilityLabel("Show beat alignment"); width(alignmentToggle,16)
         let metroCard = section("Metronome",nil,[row([metroCheck,flexible()]),row([muted("Volume"),clickVolume]),metroStatus,row([alignmentToggle,muted("Beat alignment"),flexible()]),alignmentControls])
-        let stack = col([tempoCard,loopCard,bpmCard,metroCard],spacing: 16)
+        let stack = col([tempoCard,pitchSection,loopCard,bpmCard,metroCard],spacing: 16)
         for item in stack.arrangedSubviews { item.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true }
         let document = TopDownView(); stack.translatesAutoresizingMaskIntoConstraints = false; document.addSubview(stack)
         NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo: document.leadingAnchor,constant: 16),stack.trailingAnchor.constraint(equalTo: document.trailingAnchor,constant: -16),stack.topAnchor.constraint(equalTo: document.topAnchor,constant: 24),stack.bottomAnchor.constraint(equalTo: document.bottomAnchor,constant: -24)])
@@ -83,17 +91,41 @@ extension PlayerApp {
         document.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
         return scroll
     }
+    func updatePitchControls() {
+        let shift = prefs.pitchShift
+        let available = selected != nil && smooth.ready && !audioBusy
+        pitchLabel.stringValue = shift == 0 ? "Original" : "\(shift > 0 ? "+" : "−")\(abs(shift)) \(abs(shift) == 1 ? "semitone" : "semitones")"
+        pitchDown.isEnabled = available && shift > -12; pitchUp.isEnabled = available && shift < 12
+        pitchReset.isEnabled = available && shift != 0
+        if selected == nil { pitchNote.stringValue = "Open a video to change its pitch." }
+        else if audioBusy { pitchNote.stringValue = "Loading audio…" }
+        else if !smooth.ready { pitchNote.stringValue = "Pitch unavailable; playing original audio." }
+        else if shift == -1 { pitchNote.stringValue = "Half step down · E → E♭" }
+        else if shift == 1 { pitchNote.stringValue = "Half step up · E♭ → E" }
+        else { pitchNote.stringValue = "−1: E → E♭   +1: E♭ → E" }
+    }
+    func setPitch(_ semitones: Int) {
+        guard selected != nil, smooth.ready, !audioBusy else { return }
+        prefs.pitchSemitones = min(12,max(-12,semitones))
+        smooth.pitchSemitones = prefs.pitchShift
+        updatePitchControls(); save()
+    }
+    @objc func lowerPitch() { setPitch(prefs.pitchShift-1) }
+    @objc func raisePitch() { setPitch(prefs.pitchShift+1) }
+    @objc func resetPitch() { setPitch(0) }
     @objc func toggleAlignment() {
         alignmentControls.isHidden = alignmentToggle.state != .on
         alignmentToggle.setAccessibilityLabel(alignmentControls.isHidden ? "Show beat alignment" : "Hide beat alignment")
     }
     @objc func selectAppearance(_ item: NSMenuItem) {
-        UserDefaults.standard.set(item.tag,forKey: "appearance")
-        applyAppearance()
+        if !uiTest { UserDefaults.standard.set(item.tag,forKey: "appearance") }
+        applyAppearance(choice: item.tag)
     }
-    func applyAppearance() {
-        let choice = UserDefaults.standard.object(forKey: "appearance") as? Int ?? 1
+    func applyAppearance(choice requested: Int? = nil) {
+        let choice = requested ?? (UserDefaults.standard.object(forKey: "appearance") as? Int ?? 1)
         window.appearance = choice == 0 ? nil : NSAppearance(named: choice == 1 ? .darkAqua : .aqua)
+        statsWindow?.window?.appearance = window.appearance
+        aiTrimWindow?.window?.appearance = window.appearance
         window.backgroundColor = GLoopTheme.canvas
         for item in appearanceMenu.items { item.state = item.tag == choice ? .on : .off }
         window.contentView?.needsDisplay = true

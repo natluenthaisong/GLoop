@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build GLoop using a separately installed VLC 3 application."""
+"""Build the standalone native GLoop Mac application."""
 import argparse
 import json
 import plistlib
@@ -8,18 +8,16 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-VLC = Path('/Applications/VLC.app/Contents/MacOS')
-SOURCES = ['PracticeCore.swift', 'BPMDetector.swift', 'Metronome.swift',
-           'GaplessAudio.swift', 'GLoopUI.swift', 'main.swift']
+SOURCES = ['NativeVideo.swift', 'ReleaseTests.swift', 'PracticeCore.swift', 'PracticeHandoff.swift', 'VideoDownload.swift', 'BPMDetector.swift', 'Metronome.swift',
+           'PracticeStats.swift', 'PracticeStatsUI.swift', 'PracticeStatsTests.swift', 'PitchTests.swift', 'Waveform.swift', 'WaveformTests.swift', 'ACPClient.swift', 'AITrim.swift', 'AITrimUI.swift', 'ACPTests.swift', 'GaplessAudio.swift', 'GLoopUI.swift', 'main.swift']
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--install', action='store_true', help='Build into ~/Applications instead of dist/')
     parser.add_argument('--library', type=Path, help='Optional local library JSON (no media is copied)')
+    parser.add_argument('--sign-identity', default='-', help='Developer ID Application identity; default is ad-hoc for development')
     args = parser.parse_args()
-    if not (VLC / 'include/vlc/vlc.h').exists() or not (VLC / 'lib/libvlc.dylib').exists():
-        parser.error('Install VLC 3 at /Applications/VLC.app, including its headers and libraries.')
     library = []
     if args.library:
         library = json.loads(args.library.expanduser().read_text())
@@ -32,22 +30,31 @@ def main():
     executable.parent.mkdir(parents=True, exist_ok=True)
     resources.mkdir(parents=True, exist_ok=True)
     (resources / 'Library.json').write_text(json.dumps(library, indent=2))
+    (resources / 'LICENSE').write_bytes((ROOT / 'LICENSE').read_bytes())
     subprocess.run(['swiftc', '-swift-version', '5', '-O',
                     '-target', platform.machine() + '-apple-macos13.0',
                     '-file-prefix-map', str(ROOT) + '=/GLoop',
-                    '-debug-prefix-map', str(ROOT) + '=/GLoop', '-import-objc-header', str(ROOT / 'Bridge.h'),
-                    '-I', str(VLC / 'include'), '-L', str(VLC / 'lib'), '-lvlc',
-                    '-Xlinker', '-rpath', '-Xlinker', str(VLC / 'lib'), '-framework', 'AppKit',
+                    '-debug-prefix-map', str(ROOT) + '=/GLoop', '-framework', 'AppKit', '-framework', 'AVFoundation',
                     *[str(ROOT / source) for source in SOURCES], '-o', str(executable)], check=True)
     iconset = ROOT / 'dist/GLoop.iconset'
     subprocess.run(['swift', str(ROOT / 'make-icon.swift'), str(iconset)], check=True)
     subprocess.run(['iconutil', '-c', 'icns', str(iconset), '-o', str(resources / 'GLoop.icns')], check=True)
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
         CFBundleIdentifier='local.gloop.player', CFBundleName='GLoop', CFBundleDisplayName='GLoop',
-        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='2.2.0',
+        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='3.4.0', CFBundleVersion='30400',
         CFBundleIconFile='GLoop.icns', LSMinimumSystemVersion='13.0', NSHighResolutionCapable=True,
+        NSHumanReadableCopyright='Copyright © 2026 GLoop contributors. MIT licensed.',
+        CFBundleDocumentTypes=[dict(CFBundleTypeName='GLoop Practice', CFBundleTypeRole='Viewer',
+                                    LSHandlerRank='Owner', LSItemContentTypes=['local.gloop.practice']),
+                               dict(CFBundleTypeName='Video', CFBundleTypeRole='Viewer', LSHandlerRank='Alternate',
+                                    LSItemContentTypes=['public.mpeg-4', 'com.apple.quicktime-movie'])],
+        UTExportedTypeDeclarations=[dict(UTTypeIdentifier='local.gloop.practice', UTTypeDescription='GLoop Practice',
+                                        UTTypeConformsTo=['public.json'],
+                                        UTTypeTagSpecification={'public.filename-extension': ['gloop']})],
         NSPrincipalClass='NSApplication')))
-    subprocess.run(['codesign', '--force', '--deep', '--sign', '-', str(app)], check=True)
+    signing = ['codesign', '--force', '--options', 'runtime', '--sign', args.sign_identity]
+    if args.sign_identity != '-': signing.append('--timestamp')
+    subprocess.run(signing + [str(app)], check=True)
     print(app)
 
 

@@ -21,3 +21,10 @@ State.json
 gapless-validation.txt
 design-system/
 PRODUCT.md
+node_modules/
+*.gloop
+
+PracticeStats*.json
+PracticeStats*.backup
+
+.impeccable/review/
