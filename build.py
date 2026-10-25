@@ -3,6 +3,7 @@
 import argparse
 import json
 import plistlib
+import platform
 import subprocess
 from pathlib import Path
 
@@ -31,7 +32,10 @@ def main():
     executable.parent.mkdir(parents=True, exist_ok=True)
     resources.mkdir(parents=True, exist_ok=True)
     (resources / 'Library.json').write_text(json.dumps(library, indent=2))
-    subprocess.run(['swiftc', '-swift-version', '5', '-O', '-import-objc-header', str(ROOT / 'Bridge.h'),
+    subprocess.run(['swiftc', '-swift-version', '5', '-O',
+                    '-target', platform.machine() + '-apple-macos13.0',
+                    '-file-prefix-map', str(ROOT) + '=/GLoop',
+                    '-debug-prefix-map', str(ROOT) + '=/GLoop', '-import-objc-header', str(ROOT / 'Bridge.h'),
                     '-I', str(VLC / 'include'), '-L', str(VLC / 'lib'), '-lvlc',
                     '-Xlinker', '-rpath', '-Xlinker', str(VLC / 'lib'), '-framework', 'AppKit',
                     *[str(ROOT / source) for source in SOURCES], '-o', str(executable)], check=True)
@@ -40,7 +44,7 @@ def main():
     subprocess.run(['iconutil', '-c', 'icns', str(iconset), '-o', str(resources / 'GLoop.icns')], check=True)
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
         CFBundleIdentifier='local.gloop.player', CFBundleName='GLoop', CFBundleDisplayName='GLoop',
-        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='2.2',
+        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='2.2.0',
         CFBundleIconFile='GLoop.icns', LSMinimumSystemVersion='13.0', NSHighResolutionCapable=True,
         NSPrincipalClass='NSApplication')))
     subprocess.run(['codesign', '--force', '--deep', '--sign', '-', str(app)], check=True)

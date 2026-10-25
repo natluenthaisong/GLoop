@@ -14,6 +14,13 @@ and repeat it at your chosen speed.
 - Searchable local library and settings saved per clip.
 - Dark, light and system appearance.
 
+## Download
+
+Download the Apple Silicon app from [GitHub Releases](https://github.com/natluenthaisong/GLoop/releases/latest).
+The ZIP contains an empty library and no media or personal settings. VLC 3 and
+FFmpeg are required separately. See [installation instructions](docs/INSTALL.md)
+for requirements and the app's signing status.
+
 ## Requirements
 
 - macOS 13 or later. Developed and tested on Apple Silicon.
@@ -122,3 +129,10 @@ save clip settings.
 
 [MIT](LICENSE). Third-party dependencies retain their own licenses; see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No practice media is included.
+
+## Package a release
+
+Build without `--library`, then run `python3 scripts/package_release.py`.
+The packager rejects a nonempty library, unexpected app files and personal build
+paths. It creates a ZIP and SHA-256 checksum in `dist/releases/`. Only the app,
+installation instructions, license and dependency notices go into the ZIP.
