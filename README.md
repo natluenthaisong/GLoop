@@ -27,13 +27,13 @@ and repeat it at your chosen speed.
 
 ## Download
 
-Download [GLoop 3.5.1 for Apple Silicon](https://github.com/natluenthaisong/GLoop/releases/latest).
+Download [GLoop 3.5.1 for Apple Silicon](https://github.com/natluenthaisong/GLoop/releases/latest) as a disk image, open it and drag GLoop into Applications.
 It includes direct YouTube links, the waveform editor, pitch shifting, practice
 stats, keyboard-first section finding, in-app updates and optional AI trim.
 The Mac app is Developer ID signed and notarized by Apple, so it opens normally
 after downloading. Later releases arrive through **GLoop → Check for Updates…**.
 
-The ZIP contains an empty library and no media, personal settings or AI agent
+The downloads contain an empty library and no media, personal settings or AI agent
 configuration. See [installation instructions](docs/INSTALL.md) for requirements
 and signing status. The release also includes the optional unpacked Chrome extension.
 

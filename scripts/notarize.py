@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Notarize dist/GLoop.app with a stored notarytool profile, staple it and build the public ZIP.
+"""Notarize dist/GLoop.app with a stored notarytool profile, staple it and build the public ZIP and DMG.
 
 One-time setup (credentials stay in the login keychain, never in this repository):
 
@@ -28,6 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--profile', default='GLoop', help='notarytool keychain profile name (default: GLoop)')
     parser.add_argument('--skip-package', action='store_true', help='Staple only; do not run the public packager')
+    parser.add_argument('--skip-dmg', action='store_true', help='Do not build and notarize the drag-to-Applications disk image')
     args = parser.parse_args()
     if not APP.exists():
         sys.exit('dist/GLoop.app is missing. Build it first without --library and with --sign-identity.')
@@ -56,6 +57,8 @@ def main():
     run(['spctl', '--assess', '--type', 'execute', '--verbose=2', str(APP)])
     if not args.skip_package:
         run([sys.executable, str(ROOT / 'scripts/package_release.py'), '--public'])
+    if not args.skip_dmg:
+        run([sys.executable, str(ROOT / 'scripts/make_dmg.py'), '--profile', args.profile])
     print('Notarized, stapled and verified.')
 
 

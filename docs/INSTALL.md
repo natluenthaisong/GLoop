@@ -3,7 +3,9 @@
 For Apple Silicon Macs (M1 or newer), macOS 13 or later. Tested on macOS 27.0.1;
 older target versions have not yet been checked on separate machines.
 
-1. Unzip the download and drag `GLoop.app` into Applications.
+1. Open the downloaded disk image (`.dmg`) and drag `GLoop` into the Applications
+   folder shown beside it, then eject the image. The ZIP download holds the same
+   app; unzip it and drag `GLoop.app` into Applications.
 2. Open GLoop, click **Open video…**, and choose an MP4, M4V or MOV.
 3. Drag across the waveform to select a phrase, choose a speed, then press Space.
    Drag A/B to adjust the loop; **Zoom to loop** gives a closer view.
@@ -15,8 +17,8 @@ H.264/HEVC video with AAC audio is recommended.
 
 ## Signing status
 
-GLoop 3.5.1 is Developer ID signed and notarized by Apple, with the ticket stapled
-to the app, so it opens normally after downloading. If macOS still warns, see
+GLoop 3.5.1 is Developer ID signed and notarized by Apple, with tickets stapled
+to the app and to the disk image, so it opens normally after downloading. If macOS still warns, see
 [Apple's downloaded-app guidance](https://support.apple.com/en-us/102445). Do not
 disable system-wide security settings.
 
@@ -30,7 +32,7 @@ off with **GLoop → Check for Updates Automatically**.
 
 ## Your files
 
-The ZIP includes an empty library, with no videos, personal settings, imported
+The disk image and the ZIP include an empty library, with no videos, personal settings, imported
 paths or credentials. Opened videos remain in their original location. Allow file
 access when macOS asks. An existing installation keeps its library and settings
 in `~/Library/Application Support/GLoop/State.json`.
@@ -64,10 +66,10 @@ at loop boundaries even with buffered audio. Silence in the recording remains.
 BPM detection is an estimate; correct it manually for short or changing-tempo
 passages. The metronome follows the entered tempo and playback speed.
 
-To check download integrity, place the ZIP beside `SHA256SUMS.txt` and run:
+To check download integrity, place the downloaded file beside `SHA256SUMS.txt` and run:
 
 ```sh
-shasum -a 256 -c SHA256SUMS.txt
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing
 ```
 
 ## Optional AI trim

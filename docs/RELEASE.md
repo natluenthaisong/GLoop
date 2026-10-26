@@ -6,7 +6,7 @@ and a synchronized metronome. No payment integration, account or activation.
 
 ## Changes
 
-3.5.1 adds in-app updates from GitHub releases (stable, notarized releases only, verified by checksum, signature, team and notarization before an in-place swap), moves clips bundled by `--library` builds into the saved library so updates keep them, and ships the first notarized build. See [Updates](../README.md#updates).
+3.5.1 adds in-app updates from GitHub releases (stable, notarized releases only, verified by checksum, signature, team and notarization before an in-place swap), moves clips bundled by `--library` builds into the saved library so updates keep them, and ships the first notarized build, as a drag-to-Applications disk image for first installs and a ZIP for in-app updates. See [Updates](../README.md#updates).
 
 3.5.0 adds direct YouTube links: paste a link with ⌘V or ⌘L (or drop it on the video), confirm Download, and the video is downloaded with yt-dlp/FFmpeg, added to the library under YouTube and opened with Repeat on; `youtu.be`, `shorts` and `embed` forms and `t=` start times are accepted, and a video already in the library opens without a second download. It also makes everyday practice faster from the keyboard: ⌘F finds a section and Return opens the first match; Return or Home goes back to A; Shift+[ and Shift+] change speed by 1% and the speed slider moves in 1% steps; C marks the last completed loop as played cleanly; Up/Down arrows nudge the A/B time fields. Full Screen moves to the standard ⌃⌘F. Pressing Space while audio loads starts playback when it is ready; missing video files are flagged in the library; long status messages show in full as tooltips. Rapid clip switching no longer waits for stale decodes, and the playback loop only updates controls whose visible value changed, roughly halving playback CPU. See [performance results](PERFORMANCE.md).
 
@@ -81,8 +81,11 @@ notarytool keychain profile on the release Mac; the key itself lives outside the
 repository.
 
 After the owner configures a notarytool Keychain profile locally, run the
-notarization script, which submits the app, staples the ticket and builds the
-public ZIP. Do not put credentials in source or scripts.
+notarization script, which submits the app, staples the ticket, builds the
+public ZIP and then runs `scripts/make_dmg.py`: a drag-to-Applications disk
+image holding only the app and an Applications alias, signed with the same
+Developer ID, notarized as its own submission, stapled, mounted and compared
+against the source app. Do not put credentials in source or scripts.
 
 ```sh
 xcrun notarytool store-credentials GLoop --apple-id you@example.com --team-id TEAMID   # once
@@ -91,9 +94,12 @@ python3 scripts/notarize.py --profile GLoop
 ```
 
 Publish the result as a normal (non-preview) GitHub release tagged `vX.Y.Z` with
-`GLoop-X.Y.Z-macOS-arm64.zip` and `SHA256SUMS.txt`. Installed copies of 3.5.1 or
-later find it through **Check for Updates…**, which only accepts stable releases
-with a matching checksum, the same team's signature and a valid notarization.
+`GLoop-X.Y.Z-macOS-arm64.dmg` (first installs), `GLoop-X.Y.Z-macOS-arm64.zip`
+(in-app updates) and `SHA256SUMS.txt`, which lists both. Installed copies of
+3.5.1 or later find the ZIP through **Check for Updates…**, which only accepts
+stable releases with a matching checksum, the same team's signature and a valid
+notarization. The 3.5.1 disk image was added to the published release from the
+exact app in its ZIP.
 
 Only publish as a stable release after notarization reports Accepted and the public packager passes.
 The public packager validates stapling and Gatekeeper both before packaging and
