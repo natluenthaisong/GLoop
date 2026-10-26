@@ -78,14 +78,20 @@ The candidate is Developer ID signed. Notarization has not been submitted:
 no configured notarytool Keychain profile is known for this project. Signing
 alone does not establish Gatekeeper acceptance for a downloaded app.
 
-After the owner configures a notarytool Keychain profile locally, submit the
-candidate ZIP using that profile. Do not put credentials in source or scripts.
+After the owner configures a notarytool Keychain profile locally, run the
+notarization script, which submits the app, staples the ticket and builds the
+public ZIP. Do not put credentials in source or scripts.
 
 ```sh
-xcrun notarytool submit dist/releases/GLoop-3.5.0-candidate-macOS-arm64.zip --keychain-profile YOUR_PROFILE --wait
-xcrun stapler staple dist/GLoop.app
-python3 scripts/package_release.py --public
+xcrun notarytool store-credentials GLoop --apple-id you@example.com --team-id TEAMID   # once
+python3 build.py --sign-identity 'Developer ID Application: YOUR NAME (TEAM ID)'
+python3 scripts/notarize.py --profile GLoop
 ```
+
+Publish the result as a normal (non-preview) GitHub release tagged `vX.Y.Z` with
+`GLoop-X.Y.Z-macOS-arm64.zip` and `SHA256SUMS.txt`. Installed copies of 3.5.1 or
+later find it through **Check for Updates…**, which only accepts stable releases
+with a matching checksum, the same team's signature and a valid notarization.
 
 Only publish as a stable release after notarization reports Accepted and the public packager passes.
 The public packager validates stapling and Gatekeeper both before packaging and

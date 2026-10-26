@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 SOURCES = ['NativeVideo.swift', 'ReleaseTests.swift', 'PracticeCore.swift', 'PracticeHandoff.swift', 'VideoDownload.swift', 'BPMDetector.swift', 'Metronome.swift',
-           'PracticeStats.swift', 'PracticeStatsUI.swift', 'PracticeStatsTests.swift', 'PitchTests.swift', 'Waveform.swift', 'WaveformTests.swift', 'ACPClient.swift', 'AITrim.swift', 'AITrimUI.swift', 'ACPTests.swift', 'GaplessAudio.swift', 'GLoopUI.swift', 'main.swift']
+           'PracticeStats.swift', 'PracticeStatsUI.swift', 'PracticeStatsTests.swift', 'PitchTests.swift', 'Waveform.swift', 'WaveformTests.swift', 'ACPClient.swift', 'AITrim.swift', 'AITrimUI.swift', 'ACPTests.swift', 'GaplessAudio.swift', 'GLoopUI.swift', 'Updater.swift', 'main.swift']
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
     subprocess.run(['iconutil', '-c', 'icns', str(iconset), '-o', str(resources / 'GLoop.icns')], check=True)
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
         CFBundleIdentifier='local.gloop.player', CFBundleName='GLoop', CFBundleDisplayName='GLoop',
-        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='3.5.0', CFBundleVersion='30500',
+        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='3.5.1', CFBundleVersion='30501',
         CFBundleIconFile='GLoop.icns', LSMinimumSystemVersion='13.0', NSHighResolutionCapable=True,
         NSHumanReadableCopyright='Copyright © 2026 GLoop contributors. MIT licensed.',
         CFBundleDocumentTypes=[dict(CFBundleTypeName='GLoop Practice', CFBundleTypeRole='Viewer',

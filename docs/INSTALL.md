@@ -20,6 +20,14 @@ testing build, not yet the public distribution build. macOS may block a download
 first launch. See [Apple's downloaded-app guidance](https://support.apple.com/en-us/102445).
 Do not disable system-wide security settings.
 
+## Updates
+
+GLoop checks GitHub once a day for newer stable releases and offers them in a
+sheet (**GLoop → Check for Updates…** checks immediately). The update is verified
+against its published checksum, signature and notarization before it replaces
+the app in place; your library and history are untouched. Turn automatic checks
+off with **GLoop → Check for Updates Automatically**.
+
 ## Your files
 
 The ZIP includes an empty library, with no videos, personal settings, imported

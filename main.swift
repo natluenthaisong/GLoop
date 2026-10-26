@@ -100,6 +100,8 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
     var playWhenReady = false
     /// Shown instead of "Ready" once the next clip's audio loads, for example after a pasted link.
     var readyNotice: String?
+    lazy var updater = Updater(app: self)
+    var updateInstalledForTest = false
     var missingPaths = Set<String>()
     var audioBusy = false
     var smoothAccounted = 0
@@ -199,7 +201,14 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
         if switchTiming, let i = ProcessInfo.processInfo.arguments.firstIndex(of: "--switch-timing") {
             clips = ProcessInfo.processInfo.arguments[(i+1)...].filter { $0.hasPrefix("/") }.enumerated().map { Clip(title: "Switch clip \($0.offset+1)",song: "Switch timing",path: $0.element,duration: 0) }
         }
-        if !smoke && !switchTiming { clips += saved.imports.filter { imported in !clips.contains { $0.path == imported.path } } }
+        if !smoke && !switchTiming {
+            // Clips bundled by `build.py --library` move into the saved library once, so an
+            // in-place update to a release build (which ships an empty bundle) keeps them.
+            let known = Set(saved.imports.map(\.path))
+            let bundled = clips.filter { !known.contains($0.path) && saved.hiddenPaths?.contains($0.path) != true }
+            if !bundled.isEmpty && !uiTest && !measuring { saved.imports += bundled; save() }
+            clips += saved.imports.filter { imported in !clips.contains { $0.path == imported.path } }
+        }
         clips.removeAll { saved.hiddenPaths?.contains($0.path) == true }
         checkMissingFiles()
         if smoke && clips.isEmpty { fputs("Provide --smoke-file /absolute/path/to/video with at least two seconds of audio.\n",stderr); exit(1) }
@@ -224,6 +233,9 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
                         try? FileManager.default.removeItem(at: file)
                         let target = NSApp.keyWindow ?? self.window!
                         if let image = self.snapshot(target) { try? image.write(to: folder.appendingPathComponent(String(name.dropFirst(8))+".png")) }
+                    } else if name == "query-update-state" {
+                        try? FileManager.default.removeItem(at: file)
+                        try? Data((self.updateInstalledForTest ? "installed" : "pending").utf8).write(to: folder.appendingPathComponent("update-state.txt"))
                     } else if name.hasPrefix("cmd-"), let text = try? String(contentsOf: file,encoding: .utf8) {
                         try? FileManager.default.removeItem(at: file)
                         for line in text.split(separator: "\n") { self.runUICommand(String(line)) }
@@ -241,6 +253,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
         }
         if let url = pendingFiles.first { pendingFiles.removeAll(); importVideo(url) }
         else if let startupNotice { status.stringValue = startupNotice }
+        scheduleAutomaticUpdateCheck()
     }
     func setupEngine() { player.setVolume(smoke ? 0 : saved.volume) }
     func label(_ text: String, _ size: CGFloat = 13, _ weight: NSFont.Weight = .regular) -> NSTextField {
@@ -320,6 +333,9 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
     func setupMenus() {
         let menu = NSMenu(); let appMenu = NSMenu(); let appItem = NSMenuItem(); appItem.submenu = appMenu; menu.addItem(appItem)
         appMenu.addItem(withTitle: "About GLoop",action: #selector(about),keyEquivalent: "").target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Check for Updates…",action: #selector(checkForUpdates),keyEquivalent: "").target = self
+        let automaticUpdates = appMenu.addItem(withTitle: "Check for Updates Automatically",action: #selector(toggleAutomaticUpdates(_:)),keyEquivalent: ""); automaticUpdates.target = self; automaticUpdates.state = Updater.automatic ? .on : .off
         appMenu.addItem(.separator()); appMenu.addItem(withTitle: "Quit GLoop",action: #selector(NSApplication.terminate(_:)),keyEquivalent: "q")
         let file = NSMenu(); let fi = NSMenuItem(title: "File",action: nil,keyEquivalent: ""); fi.submenu = file; menu.addItem(fi)
         file.addItem(withTitle: "Open Video…",action: #selector(openFile),keyEquivalent: "o").target = self
@@ -996,7 +1012,16 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
         alert.informativeText = "1. Open an MP4 or MOV video, paste a YouTube link (⌘V or ⌘L), or press ⌘F to find a section.\n2. Drag across the waveform, or press A and B, to mark the phrase.\n3. Choose a speed and press Space.\n4. Turn on Auto speed to add 1% or 5% each loop.\n\nSpace: play/pause · Return: back to A · [ / ]: speed ±5% (Shift ±1%) · C: played cleanly · N / P: next/previous clip\n\nBPM detection and the metronome work offline. YouTube downloads and other-format conversion need optional tools. No account or activation is required."
         alert.beginSheetModal(for: window)
     }
-    @objc func about() { let a = NSAlert(); a.messageText = "GLoop"; let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "3.5"; a.informativeText = "Guitar practice player\nVersion \(version)\n\nVideo and audio: Apple AVFoundation\nOpen source · MIT license\nNo account or activation"; a.runModal() }
+    /// One anonymous request to GitHub at most once a day, shortly after launch, unless turned off.
+    func scheduleAutomaticUpdateCheck() {
+        guard !uiTest && !smoke && !measuring, Updater.automatic else { return }
+        let last = UserDefaults.standard.double(forKey: Updater.checkedKey)
+        guard Date().timeIntervalSinceReferenceDate-last > 20*3600 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now()+15) { [weak self] in self?.updater.check(manual: false) }
+    }
+    @objc func checkForUpdates() { updater.check(manual: true) }
+    @objc func toggleAutomaticUpdates(_ item: NSMenuItem) { Updater.automatic.toggle(); item.state = Updater.automatic ? .on : .off; status.stringValue = Updater.automatic ? "GLoop checks GitHub for new releases once a day." : "Automatic update checks are off. Use Check for Updates… when you like." }
+    @objc func about() { let a = NSAlert(); a.messageText = "GLoop"; let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "3.5"; a.informativeText = "Guitar practice player\nVersion \(version)\n\nVideo and audio: Apple AVFoundation\nOpen source · MIT license\nNo account or activation\nUpdates: GitHub releases, checked once a day unless turned off"; a.runModal() }
     /// Test-only input: events are posted through the normal event queue, so monitors,
     /// key equivalents, field editors and view hit-testing behave as they do for a person.
     func runUICommand(_ line: String) {
@@ -1026,7 +1051,11 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSTableViewDataSource, N
             mouse(.leftMouseUp,to)
         case "menu" where parts.count >= 2:
             var menu = NSApp.mainMenu; var item: NSMenuItem?
-            for title in parts.dropFirst().joined(separator: " ").split(separator: ">") { item = menu?.items.first { $0.title == title.trimmingCharacters(in: .whitespaces) }; menu = item?.submenu }
+            for title in parts.dropFirst().joined(separator: " ").split(separator: ">") {
+                let wanted = title.trimmingCharacters(in: .whitespaces)
+                item = wanted == "App" ? menu?.items.first : menu?.items.first { $0.title == wanted }; menu = item?.submenu
+            }
+            fputs("UI menu: \(item?.title ?? "not found")\n",stderr)
             if let item, let action = item.action { NSApp.sendAction(action,to: item.target,from: item) }
         default: break
         }
@@ -1066,6 +1095,7 @@ extension NSBox { static func separator() -> NSBox { let box = NSBox(); box.boxT
 if ProcessInfo.processInfo.arguments.contains("--acp-test-agent") { runACPFixture(); exit(0) }
 if ProcessInfo.processInfo.arguments.contains("--acp-test") { try runACPTests(); exit(0) }
 if ProcessInfo.processInfo.arguments.contains("--stats-test") { try practiceStatsTests(); exit(0) }
+if ProcessInfo.processInfo.arguments.contains("--update-test") { try Updater.selfTest(); exit(0) }
 if ProcessInfo.processInfo.arguments.contains("--waveform-test") { try waveformTests(); exit(0) }
 if ProcessInfo.processInfo.arguments.contains("--pitch-test") { try GaplessAudio.pitchTest(); exit(0) }
 if ProcessInfo.processInfo.arguments.contains("--gapless-test") { try GaplessAudio.selfTest(); exit(0) }

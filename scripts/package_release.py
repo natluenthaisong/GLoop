@@ -21,6 +21,8 @@ APP_FILES = {
     'Contents/Resources/GLoop.icns',
     'Contents/_CodeSignature/CodeResources',
 }
+# The stapled notarization ticket lives here; present only after scripts/notarize.py.
+TICKET = 'Contents/CodeResources'
 
 
 def main():
@@ -28,8 +30,11 @@ def main():
     parser.add_argument('--public', action='store_true', help='Require Developer ID and a stapled notarization ticket')
     args = parser.parse_args()
     actual = {str(p.relative_to(APP)) for p in APP.rglob('*') if p.is_file()}
-    if actual != APP_FILES or any(p.is_symlink() for p in APP.rglob('*')):
+    if actual - {TICKET} != APP_FILES or any(p.is_symlink() for p in APP.rglob('*')):
         raise SystemExit('Unexpected app contents; rebuild in a clean dist directory.')
+    if args.public and TICKET not in actual:
+        raise SystemExit('Public release requires a stapled notarization ticket (run scripts/notarize.py).')
+    files = sorted(actual)
     if json.loads((APP / 'Contents/Resources/Library.json').read_text()) != []:
         raise SystemExit('Release library must be empty. Build without --library.')
     executable = APP / 'Contents/MacOS/GLoop'
@@ -57,7 +62,7 @@ def main():
     suffix = '' if args.public else '-candidate'
     archive = output / f'GLoop-{version}{suffix}-macOS-arm64.zip'
     with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as z:
-        for relative in sorted(APP_FILES):
+        for relative in files:
             z.write(APP / relative, 'GLoop.app/' + relative)
         for source, name in [('docs/INSTALL.md', 'INSTALL.md'), ('LICENSE', 'LICENSE'),
                              ('THIRD_PARTY_NOTICES.md', 'THIRD_PARTY_NOTICES.md')]:
@@ -66,7 +71,7 @@ def main():
         assert z.testzip() is None
         assert json.loads(z.read('GLoop.app/Contents/Resources/Library.json')) == []
         assert (z.getinfo('GLoop.app/Contents/MacOS/GLoop').external_attr >> 16) & stat.S_IXUSR
-        assert len(z.namelist()) == len(APP_FILES) + 3
+        assert len(z.namelist()) == len(files) + 3
     # Validate what customers will extract, not only the original build tree.
     with tempfile.TemporaryDirectory(prefix='gloop-release-check-') as check:
         subprocess.run(['ditto', '-x', '-k', str(archive), check], check=True)

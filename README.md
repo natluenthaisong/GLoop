@@ -38,6 +38,19 @@ The ZIP contains an empty library and no media, personal settings or AI agent
 configuration. See [installation instructions](docs/INSTALL.md) for requirements
 and signing status. The release also includes the optional unpacked Chrome extension.
 
+## Updates
+
+GLoop checks the project's GitHub releases once a day, about 15 seconds after
+launch, and offers newer stable releases in a sheet; **GLoop → Check for
+Updates…** checks right away. The check is one anonymous HTTPS request for the
+public release list and sends nothing about you or your library. Turn it off with
+**GLoop → Check for Updates Automatically**. Installing an update downloads the
+release ZIP, verifies it against the published SHA-256 checksum, the code
+signature, the same developer team and Apple notarization, swaps the app in
+place and relaunches it. Library, settings and practice history live in
+Application Support and are not touched. Previews and unnotarized candidates are
+never installed automatically.
+
 ## Requirements
 
 - Apple Silicon Mac, macOS 13 or later.
@@ -237,7 +250,10 @@ save clip settings.
 ## Package a release
 
 Build without `--library`, then run `python3 scripts/package_release.py` for a
-candidate ZIP. The packager rejects a nonempty library, unexpected app files,
+candidate ZIP. For a notarized stable release, store notarytool credentials once
+(`xcrun notarytool store-credentials GLoop --apple-id … --team-id …`), then run
+`python3 scripts/notarize.py --profile GLoop`, which submits, staples and runs the
+public packager. The packager rejects a nonempty library, unexpected app files,
 personal build paths and external shared-library dependencies. Only the app,
 installation instructions, license and dependency notices go into the ZIP.
 The `--public` option additionally requires Developer ID signing, a valid stapled
