@@ -1,10 +1,12 @@
-# GLoop 3.4.0 release candidate
+# GLoop 3.5.0 release candidate
 
 Scope: a standalone Mac guitar-practice player with reliable local playback,
 A/B loops, pitch-preserving speed control, +1%/+5% progression, BPM detection,
 and a synchronized metronome. No payment integration, account or activation.
 
 ## Changes
+
+3.5.0 adds direct YouTube links: paste a link with ⌘V or ⌘L (or drop it on the video), confirm Download, and the video is downloaded with yt-dlp/FFmpeg, added to the library under YouTube and opened with Repeat on; `youtu.be`, `shorts` and `embed` forms and `t=` start times are accepted, and a video already in the library opens without a second download. It also makes everyday practice faster from the keyboard: ⌘F finds a section and Return opens the first match; Return or Home goes back to A; Shift+[ and Shift+] change speed by 1% and the speed slider moves in 1% steps; C marks the last completed loop as played cleanly; Up/Down arrows nudge the A/B time fields. Full Screen moves to the standard ⌃⌘F. Pressing Space while audio loads starts playback when it is ready; missing video files are flagged in the library; long status messages show in full as tooltips. Rapid clip switching no longer waits for stale decodes, and the playback loop only updates controls whose visible value changed, roughly halving playback CPU. See [performance results](PERFORMANCE.md).
 
 3.4.0 adds optional ACP v1 agent connections for AI trim suggestions, explicit loop application and Undo, and MP4 export to a new file. Audio sharing is opt-in and capability-gated. See [AI Trim](AI-TRIM.md) for setup, data handling and limits. No agent, AI subscription or credentials are included.
 
@@ -65,7 +67,7 @@ and private-path/credential patterns. It produces a SHA-256 checksum.
 
 ## GitHub preview
 
-The signed candidate is published as the **v3.4.0-rc.1 pre-release**, with its
+The signed candidate is published as the **v3.5.0-rc.1 pre-release** (3.4.0 was **v3.4.0-rc.1**), with its
 notarization status and AI-provider testing limits stated in the release notes.
 It does not replace the previous stable release. The source and download packages
 exclude local media, settings, history, credentials and agent configuration.
@@ -80,7 +82,7 @@ After the owner configures a notarytool Keychain profile locally, submit the
 candidate ZIP using that profile. Do not put credentials in source or scripts.
 
 ```sh
-xcrun notarytool submit dist/releases/GLoop-3.4.0-candidate-macOS-arm64.zip --keychain-profile YOUR_PROFILE --wait
+xcrun notarytool submit dist/releases/GLoop-3.5.0-candidate-macOS-arm64.zip --keychain-profile YOUR_PROFILE --wait
 xcrun stapler staple dist/GLoop.app
 python3 scripts/package_release.py --public
 ```

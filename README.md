@@ -7,24 +7,29 @@ and repeat it at your chosen speed.
 
 - A/B loops and 5, 10, 30, 50 or unlimited plays.
 - Audio waveform with draggable loop markers, a playhead, and loop zoom.
-- Pitch-preserving playback at 25–125% speed.
+- Pitch-preserving playback at 25–125% speed, in 1% steps.
 - Pitch transposition in semitones (−12 to +12), saved per clip.
 - Automatic increases of 1 or 5 percentage points per loop, up to 100%.
 - Buffered audio loops without a video-seek pause between repeats.
 - Local BPM estimation, manual BPM entry and half/double-time correction.
 - Metronome that follows playback speed, with adjustable beat alignment.
-- Searchable local library and settings saved per clip.
+- Searchable local library and settings saved per clip. ⌘F finds a section;
+  Return opens the first match. Missing video files are flagged in the list.
 - Local practice time, completed loops, speed history and manual clean marks with Undo.
 - Optional ACP agent connection for trim suggestions, with opt-in loop audio sharing.
 - Export the current loop to a separate MP4 at original speed and pitch.
 - Dark, light and system appearance.
+- Paste a YouTube link (⌘V, ⌘L or File → Open YouTube Link…, or drop it on the
+  video) to download the video into the library and loop it. A link with a time
+  (`t=`) starts the loop there.
 - Import `.gloop` practice files from Chrome, download the YouTube video or select
   an existing copy, and continue with the same loop and speed settings.
 
 ## Download
 
-Download the [GLoop 3.4.0 preview for Apple Silicon](https://github.com/natluenthaisong/GLoop/releases/tag/v3.4.0-rc.1).
-It includes the waveform editor, pitch shifting, practice stats and optional AI trim.
+Download the [GLoop 3.5.0 preview for Apple Silicon](https://github.com/natluenthaisong/GLoop/releases/tag/v3.5.0-rc.1).
+It includes direct YouTube links, the waveform editor, pitch shifting, practice
+stats, keyboard-first section finding and optional AI trim.
 The Mac app is Developer ID signed but **not notarized**, so macOS may block its
 first launch after downloading. This is a pre-release; the previous stable release
 remains available from [GitHub Releases](https://github.com/natluenthaisong/GLoop/releases/latest).
@@ -82,17 +87,26 @@ See [AI Trim setup and privacy](docs/AI-TRIM.md).
 
 ## Practice
 
-The [Chrome extension](extension/README.md) can **Save for Mac…**. Open the
-resulting `.gloop` file in GLoop 2.3 or later, then choose **Download** or
-**Choose video…**. Downloading requires separately installed yt-dlp and FFmpeg
-(`brew install yt-dlp ffmpeg`). Full videos and a copy of the practice file are
-saved under `~/Movies/GLoop`. No browser cookies are read. Unavailable or
+To practice a YouTube video, copy its link and press **⌘V** in GLoop (or **⌘L**,
+**File → Open YouTube Link…**, or drop the link on the video). Confirm
+**Download**; the video goes into `~/Movies/GLoop`, appears in the library under
+**YouTube**, and opens with Repeat on. Drag across the waveform to pick the loop.
+`watch?v=`, `youtu.be`, `shorts` and `embed` links work, and a `t=` time starts the
+loop there. A video already in the library opens without downloading again, and a
+copy already in `~/Movies/GLoop` is reused instead of being downloaded twice.
+The [Chrome extension](extension/README.md) can also **Save for Mac…** with a
+chosen loop: open the resulting `.gloop` file in GLoop 2.3 or later, then choose
+**Download** or **Choose video…**. Downloading requires separately installed
+yt-dlp and FFmpeg (`brew install yt-dlp ffmpeg`). Full videos and a copy of the
+practice file are saved under `~/Movies/GLoop`. No browser cookies are read. Unavailable or
 restricted videos may fail to download; existing local videos still work.
 
-1. Select a clip and set the speed.
+1. Select a clip and set the speed. Press Space right away if you like: playback
+   starts as soon as the audio is ready.
 2. Drag across the waveform to select a loop, then drag **A** or **B** to refine it.
    **Zoom to loop** enlarges the selection; **Fit clip** shows the whole recording.
-   You can also seek and press **A/B**, or edit the times as `m:ss.mmm`.
+   You can also seek and press **A/B**, or edit the times as `m:ss.mmm`. In the
+   A or B field, Up and Down arrows nudge the marker by 0.05 s (0.5 s with Shift).
    **Whole clip** clears the markers.
 3. Enable **Repeat**, choose the play count, and press **Space**.
 4. Enable **Auto speed** for +1% or +5% per new loop. For example, 75 → 76 → 77.
@@ -112,16 +126,25 @@ Space to restart. Video and metronome volume are independent.
 | Key | Action |
 | --- | --- |
 | Space | Play / pause / restart |
+| Return or Home | Back to A |
 | A / B | Set loop start / end |
 | [ / ] | Speed down / up by 5 percentage points |
+| Shift + [ / ] | Speed down / up by 1 percentage point |
 | 0 | Normal speed |
 | Left / Right | Seek one second |
 | Shift + Left / Right | Seek five seconds |
 | L | Toggle repeat |
+| C | Mark the last completed loop as played cleanly |
 | N / P | Next / previous clip |
+| Command + F | Find a section (Return opens the first match, Down moves to the list) |
 | Command + O | Open video |
-| Command + F | Full screen |
+| Command + L | Open a YouTube link |
+| Command + V | Paste a YouTube link to download it (when no text field is active) |
+| Control + Command + F | Full screen |
 | Command + J | Practice stats |
+
+With Full Keyboard Access, a focused button, slider or menu keeps Space and the
+arrow keys; the shortcuts above apply when the player itself has focus.
 
 Open **Practice stats…** below the transport (or **View → Practice Stats**) for
 all-clip or current-clip totals, today's time, sessions, speed history and completed
@@ -186,7 +209,14 @@ dist/GLoop.app/Contents/MacOS/GLoop --gapless-test
 ```
 
 These check settings, loop counts, BPM estimation, metronome timing, and offline
-rendered audio across loop joins. A muted integration check requires a local video
+rendered audio across loop joins. `--launch-timing` prints launch milestones for
+the installed library without saving anything, and `--switch-timing a.mp4 b.mp4 …`
+reports how long rapid clip switching takes until the last clip is ready.
+`--ui-test --ui-test-file a.mp4 … --ui-test-snapshots DIR` opens a test library and
+answers `request-<name>` files in `DIR` with window snapshots and `cmd-*` files
+with key, click, drag and menu commands (see `runUICommand` in `main.swift`).
+Setting `GLOOP_SUPPORT_DIR=/path/to/copy` runs the app against a copy of the data
+folder so personal settings and history stay untouched. A muted integration check requires a local video
 with at least two seconds of audio:
 
 ```sh

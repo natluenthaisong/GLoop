@@ -96,7 +96,7 @@ final class PracticeStatsWindow: NSWindowController, NSTableViewDataSource, NSTa
 
 extension PlayerApp {
     func setupStats() {
-        statsStore = PracticeStatsStore(url: uiTest || smoke ? nil : support.appendingPathComponent("PracticeStats.json"))
+        statsStore = PracticeStatsStore(url: uiTest || smoke || measuring ? nil : support.appendingPathComponent("PracticeStats.json"))
         stats.data = statsStore.load()
         statsStore.onError = { [weak self] message in
             self?.statsStore.notice = message; self?.stats.changed = true

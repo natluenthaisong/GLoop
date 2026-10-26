@@ -1,4 +1,4 @@
-# Install GLoop 3.4.0
+# Install GLoop 3.5.0
 
 For Apple Silicon Macs (M1 or newer), macOS 13 or later. Tested on macOS 27.0.1;
 older target versions have not yet been checked on separate machines.
@@ -15,7 +15,7 @@ H.264/HEVC video with AAC audio is recommended.
 
 ## Candidate signing status
 
-The 3.4.0 candidate is Developer ID signed but has not been notarized. It is a
+The 3.5.0 candidate is Developer ID signed but has not been notarized. It is a
 testing build, not yet the public distribution build. macOS may block a download's
 first launch. See [Apple's downloaded-app guidance](https://support.apple.com/en-us/102445).
 Do not disable system-wide security settings.
@@ -39,7 +39,9 @@ preserving the original. This optional feature needs FFmpeg. With Homebrew:
 brew install ffmpeg
 ```
 
-The Chrome extension's **Save for Mac…** creates a `.gloop` practice file. Open it
+To practice a YouTube video, copy its link and press **⌘V** in GLoop (or use
+**File → Open YouTube Link…**), then confirm **Download**. The Chrome extension's
+**Save for Mac…** creates a `.gloop` practice file with a chosen loop. Open it
 in GLoop, then choose **Download** or **Choose video…**. Downloading needs yt-dlp
 and FFmpeg (`brew install yt-dlp ffmpeg`), installed at `/opt/homebrew/bin` or
 `/usr/local/bin`. Downloads and their practice files go in `~/Movies/GLoop`.

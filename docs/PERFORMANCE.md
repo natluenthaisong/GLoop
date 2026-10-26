@@ -1,4 +1,31 @@
-# GLoop 3.0.1 performance
+# GLoop performance
+
+## 3.5.0 interface measurements
+
+Measured 26 October 2026 on the same Apple M2, macOS 27.0, Swift 6.4 in Swift 5
+mode with `-O`. Launch used the real 293-clip library read-only (`--launch-timing`).
+Clip switching loaded six 122-second generated clips 60 ms apart (`--switch-timing`)
+and reports the time from the first switch until the last clip's audio is ready.
+Playback CPU is `top` over ten one-second samples while looping a 122-second clip
+at 75% with video visible (`--ui-test-play`), plus a 5-second `sample` profile.
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Rapid switching, 5 switches until last clip ready, ms (5 runs) | 1058–1681 | 455–602 |
+| Playback CPU, % of one core, first comparison | 14.4–16.3 | 6.2–8.3 |
+| Playback CPU, % of one core, A/B with only the tick change reverted (2 rounds) | 16.5–19.6 | 7.7–9.8 |
+| Main-thread samples in display-cycle layout, of about 2700 | 132 | 40 |
+| Launch to audio ready, warm, ms (5 runs) | 534–652 | 525–615 |
+
+Switching improved because a decode that is already stale is skipped before it
+starts; previously every queued decode ran to completion on the serial queue.
+Playback CPU dropped because the 67 Hz tick wrote the elapsed time, slider value
+and Play title every tick, and each write invalidated window layout; they are now
+written only when the visible value changes. Launch time is unchanged: about 280 ms
+is process and AppKit start-up, about 90 ms is the first window layout, and
+filtering the 293-clip library takes about 1 ms.
+
+## 3.0.1 audio kernels
 
 Measured 25 October 2026 on an Apple M2 with 8 GB RAM, macOS 27.0.1.
 Apple Swift 6.4 compiled in Swift 5 mode with `-O`, arm64/macOS 13 target.

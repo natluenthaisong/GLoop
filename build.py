@@ -41,7 +41,7 @@ def main():
     subprocess.run(['iconutil', '-c', 'icns', str(iconset), '-o', str(resources / 'GLoop.icns')], check=True)
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
         CFBundleIdentifier='local.gloop.player', CFBundleName='GLoop', CFBundleDisplayName='GLoop',
-        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='3.4.0', CFBundleVersion='30400',
+        CFBundleExecutable='GLoop', CFBundlePackageType='APPL', CFBundleShortVersionString='3.5.0', CFBundleVersion='30500',
         CFBundleIconFile='GLoop.icns', LSMinimumSystemVersion='13.0', NSHighResolutionCapable=True,
         NSHumanReadableCopyright='Copyright © 2026 GLoop contributors. MIT licensed.',
         CFBundleDocumentTypes=[dict(CFBundleTypeName='GLoop Practice', CFBundleTypeRole='Viewer',

@@ -43,9 +43,9 @@ extension PlayerApp {
     func makeInspector() -> NSView {
         speed.target = self; speed.action = #selector(speedChanged); speed.isContinuous = true; speed.setAccessibilityLabel("Playback speed percent")
         speedLabel.font = .monospacedDigitSystemFont(ofSize: 24,weight: .medium); speedLabel.textColor = GLoopTheme.text
-        let headline = row([speedLabel,flexible()]); speedLabel.toolTip = "Playback speed; pitch stays unchanged."
+        let headline = row([speedLabel,flexible()]); speedLabel.toolTip = "Playback speed; pitch stays unchanged. [ and ] change it by 5%, Shift+[ and Shift+] by 1%."
         let speedSlider = row([button("−",#selector(slower)),speed,button("+",#selector(faster))],spacing: 6)
-        speed.setContentHuggingPriority(.init(1),for: .horizontal)
+        speed.setContentHuggingPriority(.init(1),for: .horizontal); speed.numberOfTickMarks = 0
         autoIncrease.target = self; autoIncrease.action = #selector(autoIncreaseChanged); autoIncrease.font = .systemFont(ofSize: 13)
         autoIncrease.toolTip = "Raise speed on every loop, up to 100%."
         speedStep.addItems(withTitles: ["+1% / loop","+5% / loop"]); speedStep.target = self; speedStep.action = #selector(speedStepChanged); speedStep.setAccessibilityLabel("Auto speed increment")
@@ -58,7 +58,7 @@ extension PlayerApp {
         pitchLabel.setContentHuggingPriority(.init(1),for: .horizontal); pitchLabel.setAccessibilityLabel("Pitch shift"); pitchLabel.toolTip = "Changes audio pitch only. Video and tablature stay unchanged; playback speed is independent."
         pitchNote.font = .systemFont(ofSize: 12); pitchNote.textColor = GLoopTheme.muted; pitchNote.maximumNumberOfLines = 2; pitchNote.lineBreakMode = .byWordWrapping
         let pitchSection = section("Pitch",nil,[row([pitchDown,pitchLabel,pitchUp,pitchReset],spacing: 8),pitchNote])
-        for (field,name) in [(aField,"Loop start A"),(bField,"Loop end B")] { field.font = .monospacedDigitSystemFont(ofSize: 13,weight: .regular); field.alignment = .center; field.target = self; field.action = #selector(markersEdited); field.delegate = self; field.setAccessibilityLabel(name) }
+        for (field,name) in [(aField,"Loop start A"),(bField,"Loop end B")] { field.font = .monospacedDigitSystemFont(ofSize: 13,weight: .regular); field.alignment = .center; field.target = self; field.action = #selector(markersEdited); field.delegate = self; field.setAccessibilityLabel(name); field.toolTip = "Type m:ss.mmm and press Return. Up and Down arrows nudge by 0.05 s, with Shift by 0.5 s." }
         let start = col([row([label("A",12,.semibold),flexible(),button("Set here",#selector(setA))]),aField],spacing: 8)
         let end = col([row([label("B",12,.semibold),flexible(),button("Set here",#selector(setB))]),bField],spacing: 8)
         aField.widthAnchor.constraint(equalTo: start.widthAnchor).isActive = true; bField.widthAnchor.constraint(equalTo: end.widthAnchor).isActive = true
@@ -68,13 +68,13 @@ extension PlayerApp {
         let loopCard = section("Loop",nil,[fillRow([start,end]),row([loopCheck,flexible(),button("Whole clip",#selector(clearMarkers))]),row([muted("Plays"),flexible(),repeatMenu]),progress])
         detectBPMButton.title = "Detect BPM"; detectBPMButton.target = self; detectBPMButton.action = #selector(detectBPM); detectBPMButton.bezelStyle = .rounded
         bpmField.placeholderString = "—"; bpmField.alignment = .center; bpmField.font = .monospacedDigitSystemFont(ofSize: 16,weight: .medium); width(bpmField,74)
-        bpmField.target = self; bpmField.action = #selector(bpmEdited); bpmField.setAccessibilityLabel("Original BPM"); bpmField.toolTip = "Original tempo at 100% speed. Enter a number and press Return."
+        bpmField.target = self; bpmField.action = #selector(bpmEdited); bpmField.delegate = self; bpmField.setAccessibilityLabel("Original BPM"); bpmField.toolTip = "Original tempo at 100% speed. Enter a number and press Return."
         effectiveBPM.font = .monospacedDigitSystemFont(ofSize: 15,weight: .medium); effectiveBPM.textColor = GLoopTheme.text
         bpmNote.font = .systemFont(ofSize: 12); bpmNote.textColor = GLoopTheme.muted; bpmNote.maximumNumberOfLines = 2; bpmNote.lineBreakMode = .byWordWrapping
         let bpmCard = section("Tempo",nil,[row([muted("Original BPM"),flexible(),bpmField]),fillRow([detectBPMButton,button("÷2",#selector(halfBPM)),button("×2",#selector(doubleBPM))]),effectiveBPM,bpmNote])
         metroCheck.title = "On"; metroCheck.target = self; metroCheck.action = #selector(metroChanged)
         clickVolume.target = self; clickVolume.action = #selector(clickVolumeChanged); clickVolume.setAccessibilityLabel("Metronome volume percent")
-        beatField.font = .monospacedDigitSystemFont(ofSize: 13,weight: .regular); beatField.target = self; beatField.action = #selector(beatEdited); beatField.setAccessibilityLabel("Beat anchor time")
+        beatField.font = .monospacedDigitSystemFont(ofSize: 13,weight: .regular); beatField.target = self; beatField.action = #selector(beatEdited); beatField.delegate = self; beatField.setAccessibilityLabel("Beat anchor time")
         metroStatus.font = .systemFont(ofSize: 12); metroStatus.textColor = GLoopTheme.muted; metroStatus.maximumNumberOfLines = 2; metroStatus.lineBreakMode = .byWordWrapping
         alignmentControls = col([fieldLabel("Beat position (m:ss.mmm)",beatField),fillRow([button("Align here",#selector(alignBeat)),button("Beat at A",#selector(beatAtA))])],spacing: 12)
         for child in alignmentControls.arrangedSubviews { child.widthAnchor.constraint(equalTo: alignmentControls.widthAnchor).isActive = true }

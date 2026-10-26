@@ -79,6 +79,16 @@ final class VideoDownload {
         succeeded = true
         return media
     }
+    /// A video downloaded earlier for the same ID is reused; download folders are named "<id>-<random>".
+    static func existingDownload(videoID: String, root: URL) -> URL? {
+        guard videoID.range(of: #"^[A-Za-z0-9_-]{11}$"#, options: .regularExpression) != nil,
+              let folders = try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey]) else { return nil }
+        for folder in folders.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) where folder.lastPathComponent.hasPrefix(videoID + "-") {
+            guard let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isRegularFileKey]) else { continue }
+            if let media = files.first(where: { ["mp4", "mov", "m4v"].contains($0.pathExtension.lowercased()) && $0.lastPathComponent.contains("[" + videoID + "]") && (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true }) { return media }
+        }
+        return nil
+    }
     static func duration(_ url: URL) throws -> Double {
         try NativeAudio.duration(url)
     }

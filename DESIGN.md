@@ -8,6 +8,8 @@ No slogans, oversized in-window branding, decorative panels or promotional statu
 
 Dark and light themes remain available. Preserve all playback, loop, metronome and library behavior.
 
+Keyboard first for everyday practice: ⌘F focuses the library search, Return opens the first match and returns focus to the player, Down moves into the list. Return or Home goes back to A. [ and ] step speed by 5% and Shift steps by 1%; the slider moves in 1% steps because auto speed works in 1% steps. C marks the last completed loop clean. Up/Down in the A/B fields nudge a marker without restarting from A. Full Screen stays on the standard ⌃⌘F. With Full Keyboard Access, a focused control keeps Space and the arrows. Space during audio loading queues playback rather than being ignored. Library rows name a missing file in the detail line; the status line keeps its full text as a tooltip when it is truncated.
+
 ## Components
 
 Place the waveform directly below the video in a compact strip (88 pt high), using the existing neutral surface and bounded peaks from decoded audio. Draw unselected peaks in muted gray, the selected A/B range and labeled marker badges in the theme accent, and the playhead in the text color. Keep timestamps tabular. Support dragging a new range or either marker, clicking to seek within the loop, and Escape to cancel a drag. Provide native Zoom to loop and Fit clip buttons; zoom changes only the visible range. Show factual loading and unavailable messages. Retain the native playback slider and editable A/B time fields as keyboard-accessible alternatives, with accessibility labels and gesture help.
