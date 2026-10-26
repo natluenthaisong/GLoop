@@ -78,6 +78,16 @@ final class Updater {
         }
         return best
     }
+    /// The first paragraph of the release notes as plain text for the sheet.
+    static func plainSummary(_ notes: String) -> String {
+        for line in notes.split(whereSeparator: \.isNewline) {
+            var text = line.trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty, !text.hasPrefix("#"), !text.hasPrefix("-"), !text.hasPrefix("*") else { continue }
+            for marker in ["**", "`", "__"] { text = text.replacingOccurrences(of: marker, with: "") }
+            return String(text.prefix(400))
+        }
+        return ""
+    }
     static func expectedDigest(in checksums: String, for name: String) -> String? {
         for line in checksums.split(whereSeparator: \.isNewline) {
             let fields = line.split(separator: " ", omittingEmptySubsequences: true)
@@ -140,7 +150,7 @@ final class Updater {
         guard app.window.attachedSheet == nil, app.downloadJob == nil else { if manual { app.status.stringValue = "GLoop \(release.version) is available. Finish the current import, then check again." }; return }
         app.status.stringValue = "GLoop \(release.version) is available."
         let alert = NSAlert(); alert.messageText = "GLoop \(release.version) is available"
-        let summary = release.notes.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty && !$0.hasPrefix("#") }.prefix(3).joined(separator: "\n")
+        let summary = Self.plainSummary(release.notes)
         alert.informativeText = "You have \(Self.current). The update is downloaded from GitHub, checked against its published checksum, signature and notarization, then installed in place. Your library, settings and practice history stay where they are.\n\n" + (summary.isEmpty ? "" : summary + "\n\n") + "Release notes: \(release.page.absoluteString)"
         alert.addButton(withTitle: "Install and Relaunch"); alert.addButton(withTitle: "Later"); alert.addButton(withTitle: "Skip This Version")
         alert.beginSheetModal(for: app.window) { [weak self] answer in
@@ -232,6 +242,8 @@ final class Updater {
         precondition(expectedDigest(in: "abcd  other.zip\n" + String(repeating: "a", count: 64) + "  GLoop-3.5.2-macOS-arm64.zip\n", for: "GLoop-3.5.2-macOS-arm64.zip") == String(repeating: "a", count: 64))
         precondition(expectedDigest(in: "short  GLoop-3.5.2-macOS-arm64.zip\n", for: "GLoop-3.5.2-macOS-arm64.zip") == nil)
         do { _ = try select(Data("{}".utf8), current: ReleaseVersion("1")!); preconditionFailure("Non-list feed accepted") } catch is UpdateError {}
+        precondition(plainSummary("# Title\n\n- **bullet** first\nGLoop **3.6** adds `things`.\nMore\n") == "GLoop 3.6 adds things.")
+        precondition(plainSummary("## Only headings\n- and bullets\n") == "")
         let file = FileManager.default.temporaryDirectory.appendingPathComponent("GLoop-sha-\(UUID().uuidString)")
         try Data("abc".utf8).write(to: file); defer { try? FileManager.default.removeItem(at: file) }
         let digest = try sha256(file); precondition(digest == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
