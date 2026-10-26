@@ -1,4 +1,4 @@
-# Install GLoop 3.5.0
+# Install GLoop 3.5.1
 
 For Apple Silicon Macs (M1 or newer), macOS 13 or later. Tested on macOS 27.0.1;
 older target versions have not yet been checked on separate machines.
@@ -13,12 +13,12 @@ Playback, buffered loops, BPM detection and the metronome run locally using
 macOS frameworks. No VLC installation, account or activation is needed.
 H.264/HEVC video with AAC audio is recommended.
 
-## Candidate signing status
+## Signing status
 
-The 3.5.0 candidate is Developer ID signed but has not been notarized. It is a
-testing build, not yet the public distribution build. macOS may block a download's
-first launch. See [Apple's downloaded-app guidance](https://support.apple.com/en-us/102445).
-Do not disable system-wide security settings.
+GLoop 3.5.1 is Developer ID signed and notarized by Apple, with the ticket stapled
+to the app, so it opens normally after downloading. If macOS still warns, see
+[Apple's downloaded-app guidance](https://support.apple.com/en-us/102445). Do not
+disable system-wide security settings.
 
 ## Updates
 

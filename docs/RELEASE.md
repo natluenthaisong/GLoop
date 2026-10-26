@@ -1,10 +1,12 @@
-# GLoop 3.5.0 release candidate
+# GLoop 3.5.1 release
 
 Scope: a standalone Mac guitar-practice player with reliable local playback,
 A/B loops, pitch-preserving speed control, +1%/+5% progression, BPM detection,
 and a synchronized metronome. No payment integration, account or activation.
 
 ## Changes
+
+3.5.1 adds in-app updates from GitHub releases (stable, notarized releases only, verified by checksum, signature, team and notarization before an in-place swap), moves clips bundled by `--library` builds into the saved library so updates keep them, and ships the first notarized build. See [Updates](../README.md#updates).
 
 3.5.0 adds direct YouTube links: paste a link with ⌘V or ⌘L (or drop it on the video), confirm Download, and the video is downloaded with yt-dlp/FFmpeg, added to the library under YouTube and opened with Repeat on; `youtu.be`, `shorts` and `embed` forms and `t=` start times are accepted, and a video already in the library opens without a second download. It also makes everyday practice faster from the keyboard: ⌘F finds a section and Return opens the first match; Return or Home goes back to A; Shift+[ and Shift+] change speed by 1% and the speed slider moves in 1% steps; C marks the last completed loop as played cleanly; Up/Down arrows nudge the A/B time fields. Full Screen moves to the standard ⌃⌘F. Pressing Space while audio loads starts playback when it is ready; missing video files are flagged in the library; long status messages show in full as tooltips. Rapid clip switching no longer waits for stale decodes, and the playback loop only updates controls whose visible value changed, roughly halving playback CPU. See [performance results](PERFORMANCE.md).
 
@@ -72,11 +74,11 @@ notarization status and AI-provider testing limits stated in the release notes.
 It does not replace the previous stable release. The source and download packages
 exclude local media, settings, history, credentials and agent configuration.
 
-## Remaining stable-release checks
+## Notarized stable release
 
-The candidate is Developer ID signed. Notarization has not been submitted:
-no configured notarytool Keychain profile is known for this project. Signing
-alone does not establish Gatekeeper acceptance for a downloaded app.
+3.5.1 is notarized with an App Store Connect API key stored as the `GLoop`
+notarytool keychain profile on the release Mac; the key itself lives outside the
+repository.
 
 After the owner configures a notarytool Keychain profile locally, run the
 notarization script, which submits the app, staples the ticket and builds the
